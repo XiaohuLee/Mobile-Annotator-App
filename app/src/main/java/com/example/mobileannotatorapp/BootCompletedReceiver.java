@@ -14,7 +14,6 @@ public class BootCompletedReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         Log.d("BootCompletedReceiver: ", "onReceive");
         context.startActivity(new Intent(context, MainActivity.class));
-
     }
 
 }
