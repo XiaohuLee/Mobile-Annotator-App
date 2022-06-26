@@ -1,8 +1,7 @@
 package com.example.mobileannotatorapp;
 
-import java.util.ArrayList;
 
-public class data {
+public class Data {
     private String dateTime;
     private String batteryLevel;
     private String typeOfPrompt;
@@ -10,7 +9,7 @@ public class data {
     private String recognizedText;
     private String audioLength;
     private String[] meaningfulKeywords;
-    public data(String dateTime, String batteryLevel, String typeOfPrompt, String fileName, String recognizedText, String audioLength, String[] meaningfulKeywords) {
+    public Data(String dateTime, String batteryLevel, String typeOfPrompt, String fileName, String recognizedText, String audioLength, String[] meaningfulKeywords) {
         this.dateTime = dateTime;
         this.batteryLevel = batteryLevel;
         this.typeOfPrompt = typeOfPrompt;
@@ -25,7 +24,7 @@ public class data {
         String keywords = "";
 
         for (String word: meaningfulKeywords) {
-            keywords = keywords + word + ", ";
+            keywords = keywords + word + "; ";
         }
         int keywordsLen = keywords.length();
         if (keywordsLen >= 2) {

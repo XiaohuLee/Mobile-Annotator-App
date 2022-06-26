@@ -11,9 +11,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
+import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.media.ToneGenerator;
+import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Environment;
 import android.os.PowerManager;
@@ -28,14 +30,17 @@ import com.intentfilter.androidpermissions.PermissionManager;
 import com.intentfilter.androidpermissions.models.DeniedPermission;
 import com.intentfilter.androidpermissions.models.DeniedPermissions;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Timer;
 import java.util.TimerTask;
 
 
 public class Alarm extends BroadcastReceiver {
     private static final String LOG_TAG = "Alarm:";
+    private static final String LOG_FILE = "mobile annotator app log file";
     private PermissionManager recordAudioPermissionManager = null;
     private PermissionManager writeExternalStoragePermissionManager = null;
     private Boolean result1 = false; //record Audio
@@ -46,6 +51,7 @@ public class Alarm extends BroadcastReceiver {
     // creating a variable for mediaplayer class
     private MediaPlayer mPlayer;
     private static int count;
+    private String batteryLev;
 
     // string variable is created for storing a file name
     private static String mFileName = null;
@@ -65,6 +71,12 @@ public class Alarm extends BroadcastReceiver {
         Toast.makeText(context, "Alarm !!!!!!!!!!", Toast.LENGTH_LONG).show(); // For example
         ToneGenerator toneGen1 = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
         toneGen1.startTone(ToneGenerator.TONE_CDMA_PIP,150);
+        count++;
+        Log.d(LOG_TAG, "num " + count + " alarm");
+        int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+        int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+        float batteryPct = level * 100 / (float)scale;
+        batteryLev = batteryPct + "%";
         audioRecord(context);
 
         wl.release();
@@ -107,7 +119,7 @@ public class Alarm extends BroadcastReceiver {
 
         if (CheckPermissions(context)) {
             Log.d(LOG_TAG, "Audio Record: Permission granted");
-            startRecording();
+            startRecording(context);
         } else {
             Log.d(LOG_TAG, "Audio Record: Permission denied");
             requestAudioRecordPermission(context);
@@ -116,19 +128,19 @@ public class Alarm extends BroadcastReceiver {
 
     }
 
-    private void startTimer() {
+    private void startTimer(Context context) {
         Log.d(LOG_TAG, "start timer");
         //set a new Timer
         timer = new Timer();
 
         //initialize the TimerTask's job
-        initializeTimerTask();
+        initializeTimerTask(context);
 
         //schedule the timer, after 5000ms
         timer.schedule(timerTask, 5000);
     }
 
-    private void initializeTimerTask() {
+    private void initializeTimerTask(Context context) {
         timerTask = new TimerTask() {
             @Override
             public void run() {
@@ -143,21 +155,36 @@ public class Alarm extends BroadcastReceiver {
 
                 // for playing our recorded audio
                 // we are using media player class.
-                mPlayer = new MediaPlayer();
-                try {
-                    Log.d(LOG_TAG, "initializeTimerTask: run");
+                //mPlayer = new MediaPlayer();
+                //try {
+
+                    //Log.d(LOG_TAG, "initializeTimerTask: run" + getDuration(mFileName));
                     // below method is used to set the
-                    // data source which will be our file name
-                    mPlayer.setDataSource(mFileName);
+                    // Data source which will be our file name
+                    //mPlayer.setDataSource(mFileName);
 
                     // below method will prepare our media player
-                    mPlayer.prepare();
+                    //mPlayer.prepare();
 
                     // below method will start our media player.
-                    mPlayer.start();
+                    //mPlayer.start();
                     //statusTV.setText("Recording Started Playing");
-                } catch (IOException e) {
-                    Log.e(LOG_TAG, "prepare() failed");
+
+
+                //} catch (IOException e) {
+                //    Log.e(LOG_TAG, "prepare() failed");
+                //}
+
+                Data data = new Data(Calendar.getInstance().getTime().toString(), batteryLev, "phone initiated", mFileName, "nope", getDuration(mFileName).toString(), new String[] {"nope", "nope"});
+
+
+                try {
+                    FileOutputStream out = context.openFileOutput(LOG_FILE, Context.MODE_APPEND);
+                    String entry ="222";
+                    out.write(entry.getBytes());
+                    out.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         };
@@ -225,7 +252,7 @@ public class Alarm extends BroadcastReceiver {
 
     }
 
-    private void startRecording() {
+    private void startRecording(Context context) {
         mFileName = Environment.getExternalStorageDirectory().getAbsolutePath();
         mFileName += "/AudioRecording" + count + ".3gp";
         Log.d(LOG_TAG, "mFileName: " + mFileName);
@@ -260,7 +287,18 @@ public class Alarm extends BroadcastReceiver {
         // start method will start
         // the audio recording.
         mRecorder.start();
-        startTimer();
+        startTimer(context);
+
+    }
+
+    private String getDuration(String fileName) {
+        MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
+        mediaMetadataRetriever.setDataSource(fileName);
+        String durationStr = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+        return durationStr;
+    }
+
+    private void saveLog() {
 
     }
 
